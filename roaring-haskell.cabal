@@ -1,0 +1,30 @@
+name:                roaring-haskell
+version:             0.1.0.0
+-- synopsis:
+-- description:
+homepage:            https://github.com/githubuser/roaring-haskell#readme
+license:             BSD3
+license-file:        LICENSE
+author:              Author name here
+maintainer:          example@example.com
+copyright:           2021 Author name here
+category:            Web
+build-type:          Simple
+extra-source-files:  README.md
+cabal-version:       >=1.10
+
+library
+  hs-source-dirs:      src
+  exposed-modules:     
+                        Data.Core, 
+                        Data.Dense, 
+                        Data.Run, 
+                        Data.Sparse
+  build-depends:       
+                        base >= 4.7 && < 5,
+                        vector >= 0.12
+  default-language:    Haskell2010
+
+source-repository head
+  type:     git
+  location: https://github.com/githubuser/roaring-haskell
