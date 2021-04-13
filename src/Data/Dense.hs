@@ -23,3 +23,11 @@ toList (Bitmap x) = V.toList x
 
 length :: Dense -> Int
 length (Bitmap x) = V.length x
+
+add :: Dense -> Int -> Dense
+add (Bitmap d) = Bitmap . (d //) . flip zip (repeat True) . repeat
+
+(+||+) :: Dense -> [Int] -> Dense
+a +||+ ls = foldr (flip add) a ls
+
+-- crash :: Dense -> Dense -> Dense
