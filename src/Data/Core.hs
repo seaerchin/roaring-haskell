@@ -1,9 +1,9 @@
 module Data.Core where
 
-import Data.Dense (Dense (Bitmap), emptyVec, toList, (+||+))
+import Data.Dense (Dense (Bitmap), combineDense, emptyVec, intersect, toList, (+||+))
 import qualified Data.Dense as D
 import Data.Run (Run)
-import Data.Sparse (Sparse)
+import Data.Sparse (Sparse, combineSparse)
 import qualified Data.Sparse as S
 import Data.Vector (Vector, (//))
 import qualified Data.Vector as V
@@ -24,14 +24,25 @@ newtype Union = Union {getInnerFromUnion :: Inner}
 
 newtype Intersection = Intersection {getInnerFromIntersect :: Inner}
 
--- Union of two different bitmaps
--- Simply take everything
 instance Semigroup Union where
   -- TODO: self union
-  Union (Dense a) <> Union (Dense b) = undefined
-  Union (Sparse a) <> Union (Sparse b) = undefined
+  Union (Dense a) <> Union (Dense b) = (Union . Dense) $ combineDense a b
+  -- NOTE: Type conversion is done here to ensure that an appropriate container is chosen
+  Union (Sparse a) <> Union (Sparse b) = Union . convert . Sparse $ combineSparse a b
   Union (Dense a) <> Union (Sparse b) = (Union . Dense) (a +||+ b)
   Union (Sparse b) <> Union (Dense a) = (Union . Dense) (a +||+ b)
+
+instance Semigroup Intersection where
+  Intersection (Dense a) <> Intersection (Dense b) = (Intersection . convert . Dense) $ combineDense a b
+  Intersection (Sparse a) <> Intersection (Sparse b) = (Intersection . Sparse) $ combineSparse a b
+  Intersection (Dense a) <> Intersection (Sparse b) = (Intersection . convert . Dense) $ intersect a b
+  Intersection (Sparse a) <> Intersection (Dense b) = (Intersection . convert . Dense) $ intersect b a
+
+instance Monoid Union where
+  mempty = (Union . Dense) D.empty
+
+instance Monoid Intersection where
+  mempty = (Intersection . Sparse) []
 
 -- Inserts an integer into the container
 -- O(n) time - Haskell lists are singly linked lists so indexing takes O(n).
