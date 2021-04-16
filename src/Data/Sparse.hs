@@ -20,10 +20,10 @@ insert n x = prefix ++ [n] ++ suffix
     suffix = dropWhile (< n) x
 
 combineSparse :: Sparse -> Sparse -> Sparse
-combineSparse a b = reverse $ go a b []
+combineSparse a b = go a b []
   where
-    go [] _ sorted = sorted
-    go _ [] sorted = sorted
+    go [] a sorted = reverse sorted ++ a
+    go a [] sorted = reverse sorted ++ a
     go xss@(x : xs) yss@(y : ys) sorted
       | x >= y = go xss ys (y : sorted)
       | otherwise = go xs yss (x : sorted)

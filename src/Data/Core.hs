@@ -20,12 +20,11 @@ data Roaring a = Roar Int Inner deriving (Show, Eq, Ord)
 -- 2. Union
 -- There are 2 newtypes defined here as wrappers to identify which the programmer wants.
 -- There is also no explicit monoidal operation defined on the base Inner type for this exact reason.
-newtype Union = Union {getInnerFromUnion :: Inner}
+newtype Union = Union {getInnerFromUnion :: Inner} deriving (Show, Eq)
 
-newtype Intersection = Intersection {getInnerFromIntersect :: Inner}
+newtype Intersection = Intersection {getInnerFromIntersect :: Inner} deriving (Show, Eq)
 
 instance Semigroup Union where
-  -- TODO: self union
   Union (Dense a) <> Union (Dense b) = (Union . Dense) $ combineDense a b
   -- NOTE: Type conversion is done here to ensure that an appropriate container is chosen
   Union (Sparse a) <> Union (Sparse b) = Union . convert . Sparse $ combineSparse a b
@@ -59,6 +58,8 @@ convert n@(Sparse x)
   | otherwise = n
 convert n@(Dense x)
   | D.length x < 4096 = Sparse $ fromDense x
+  | otherwise = n
+convert n@(Run x) = n
 
 fromSparse :: Sparse -> Dense
 fromSparse ls = Bitmap (emptyVec // zipped)
@@ -70,3 +71,20 @@ fromSparse ls = Bitmap (emptyVec // zipped)
 -- change the type to list
 fromDense :: Dense -> Sparse
 fromDense = map fst . filter snd . zip [0 ..] . toList
+
+main :: IO ()
+main =
+  do
+    let a = Sparse [1, 2, 3]
+    let y = D.empty
+    let z = y +||+ [4094, 4095] +||+ [1, 2, 3]
+    -- let z = y +||+ [0, 1]
+    let helper = map fst . filter snd . zip [0 ..] . D.toList
+    let intersected = Intersection a <> Intersection (Dense z)
+    print intersected
+    let b = Sparse [2, 3, 4, 5, 13]
+    let union = Union (Dense z) <> Union b
+    print b
+    print z
+    print union
+    print (helper z)

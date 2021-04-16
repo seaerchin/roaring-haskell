@@ -3,6 +3,7 @@ module Data.Dense where
 import Data.Sparse (Sparse)
 import Data.Vector (Vector, (!), (//))
 import qualified Data.Vector as V
+import Debug.Trace (trace)
 
 -- This file describes a way of storing densely populated data using bitmaps.
 -- A bitmap is simply a vector of bits.
@@ -13,7 +14,7 @@ type Bit = Bool
 newtype Dense = Bitmap (Vector Bit) deriving (Show, Eq, Ord)
 
 emptyVec :: Vector Bit
-emptyVec = V.replicate (2 ^ 16) False
+emptyVec = V.replicate (2 ^ 12) False
 
 empty :: Dense
 empty = Bitmap emptyVec
@@ -22,13 +23,13 @@ toList :: Dense -> [Bit]
 toList (Bitmap x) = V.toList x
 
 length :: Dense -> Int
-length (Bitmap x) = V.length x
+length (Bitmap x) = V.length $ V.filter id x
 
 add :: Dense -> Int -> Dense
-add (Bitmap d) = Bitmap . (d //) . flip zip (repeat True) . repeat
+add (Bitmap d) i = Bitmap (d // [(i, True)])
 
 (+||+) :: Dense -> [Int] -> Dense
-a +||+ ls = foldr (flip add) a ls
+(Bitmap d) +||+ ls = Bitmap $ d // zip ls (repeat True)
 
 -- NOTE: The paper actually uses bit operations, which is a better way of doing things
 -- This is done solely because it's more idiomatic in haskell ._.
@@ -43,6 +44,6 @@ intersectDense (Bitmap first) (Bitmap second) = Bitmap $ V.zipWith (&&) first se
 -- This operation is guaranteed to be safe
 -- This is because all sparse arrays are guaranteed to have cardinality < 4096
 intersect :: Dense -> [Int] -> Dense
-intersect bm@(Bitmap d) ls = Bitmap $ d // bits ls
+intersect bm@(Bitmap d) ls = Bitmap $ emptyVec // bits ls
   where
-    bits = filter (not . snd) . map (\idx -> (idx, d ! idx))
+    bits = filter snd . map (\idx -> (idx, d ! idx))
